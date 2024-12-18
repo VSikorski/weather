@@ -1,0 +1,40 @@
+services:
+  flask_app:
+    container_name: flask_app
+    image: group_55/flask:1.0.0
+    build: ./backend
+    environment:
+      - ./.env
+      - DB_URL=postgresql://postgres:postgres@flask_db:5432/postgres
+    ports:
+      - "${FLASK_PORT}:4000"
+    depends_on:
+      - flask_db
+
+  flask_db:
+    container_name: flask_db
+    image: postgres:12
+    environment:
+      - ./.env
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  frontend:
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - ./.env 
+    ports:
+      - "${VUE_PORT}:80" 
+    depends_on:
+      - flask_app
+
+volumes:
+  pgdata:
