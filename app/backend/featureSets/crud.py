@@ -231,36 +231,55 @@ def insert_weather_data():
     # receive the payload from the user
     data = request.get_json()
 
-    if "city_name" not in data:
-        return jsonify({"error": "city_name is a required parameter"}), 400
+    if not isinstance(data, (dict, list)):
+        return jsonify({"error": "Data must be an object or array of objects"}), 400
 
-    if "temperature" not in data:
-        return jsonify({"error": "temperature is a required parameter"}), 400
+    # casting the object to array for consistency
+    if isinstance(data, dict):
+        data = [data]
 
-    new_weather = WeatherData(
-        city_name=data["city_name"],
-        temperature=data["temperature"],
-        date_time=data.get("date_time", datetime.now()),
-        relative_humidity=data.get("relative_humidity", None),
-        apparent_temperature=data.get("apparent_temperature", None),
-        precipitation=data.get("precipitation", None),
-        rain=data.get("rain", None),
-        snowfall=data.get("snowfall", None),
-        wind_speed_10_m=data.get("wind_speed_10_m", None)
-    )
+    for item in data:
+        if "city_name" not in item:
+            return jsonify({"error": "city_name is a required parameter"}), 400
+        if "temperature" not in item:
+            return jsonify({"error": "temperature is a required parameter"}), 400
 
-    db.session.add(new_weather)
+        if "date_time" not in item:
+            item["date_time"] = datetime.now()
+
+        duplicate_weather_data = WeatherData.query.filter_by(city_name=item["city_name"], date_time=item["date_time"]).first()
+        if duplicate_weather_data:
+            return jsonify({"error": f"city_name and date_time combination must be unique. id: {duplicate_weather_data.id}."}), 400
+
+    new_weather_data = []
+    for item in data:
+        new_weather = WeatherData(
+            city_name=item["city_name"],
+            temperature=item["temperature"],
+            date_time=item["date_time"],
+            relative_humidity=item.get("relative_humidity", None),
+            apparent_temperature=item.get("apparent_temperature", None),
+            precipitation=item.get("precipitation", None),
+            rain=item.get("rain", None),
+            snowfall=item.get("snowfall", None),
+            wind_speed_10_m=item.get("wind_speed_10_m", None)
+        )
+        new_weather_data.append(new_weather)
+        db.session.add(new_weather)
+
     db.session.commit()
 
     if 'text/csv' in request.headers.get('Accept', ''):
         output = StringIO()
         writer = csv.writer(output)
-        writer.writerow([new_weather.csv_header()])
-        writer.writerow([new_weather.csv()])
+        writer.writerow(new_weather_data[0].csv_header())
+        for new_weather in new_weather_data:
+            writer.writerow([new_weather.csv()])
         return Response(
             output.getvalue(),
             mimetype='text/csv',
             headers={"Content-Disposition": "inline"},
             status=201
         )
-    return jsonify(new_weather.json()), 201
+
+    return jsonify([new_weather.json() for new_weather in new_weather_data]), 201

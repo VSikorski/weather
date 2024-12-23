@@ -1,6 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-import WeatherData from '../views/WeatherData.vue'
+import RetrieveView from '../views/RetrieveView.vue'
+import DeleteView from '@/views/DeleteView.vue'
+import InsertView from '@/views/InsertView.vue'
+import UpdateView from '@/views/UpdateView.vue'
+import MonthlyView from '@/views/MonthlyView.vue'
+import UploadFile from '@/components/UploadFile.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -11,18 +16,35 @@ const router = createRouter({
       component: HomeView,
     },
     {
-      path: '/about',
-      name: 'about',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue'),
+      path: '/apiR',
+      name: 'Retrieve',
+      component: RetrieveView,
     },
     {
-      path: '/weather',
-      name: 'WeatherData',
-      component: WeatherData, // Add the route for WeatherData
+      path: '/apiD',
+      name: 'Delete',
+      component: DeleteView,
     },
+    {
+      path: '/apiI',
+      name: 'Insert',
+      component: InsertView,
+    },
+    {
+      path: '/apiU',
+      name: 'Update',
+      component: UpdateView,
+    },
+    {
+      path: '/monthly',
+      name: 'Monthly',
+      component: MonthlyView,
+    },
+    {
+      path: '/upload',
+      name: 'Upload',
+      component: UploadFile,
+    }
   ],
 })
 
